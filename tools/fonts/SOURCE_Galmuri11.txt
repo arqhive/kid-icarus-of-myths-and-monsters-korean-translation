@@ -1,0 +1,6 @@
+Galmuri by quiple / Lee Minseo
+https://github.com/quiple/galmuri
+Commit: 71e1cacf1437a11220307120e63e30bc275312d4
+Source: dist/Galmuri11.bdf
+License: SIL Open Font License 1.1 (OFL.txt)
+Used to render the title artwork; no renamed or modified font package is distributed.

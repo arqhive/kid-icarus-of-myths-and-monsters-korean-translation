@@ -1,0 +1,25 @@
+# Game ROMs, saves, screenshots and extracted source material
+*.gb
+*.gbc
+*.sav
+*.state
+*.bin
+roms/
+work/
+analysis/
+korean_demo/
+korean_full/
+
+# Generated releases and font downloads (license/provenance are tracked)
+release/*.ips
+release/*.zip
+release/patch_manifest.json
+tools/fonts/*.bdf
+
+# Python and editor caches
+__pycache__/
+*.py[cod]
+.venv/
+*.log
+.DS_Store
+Thumbs.db
