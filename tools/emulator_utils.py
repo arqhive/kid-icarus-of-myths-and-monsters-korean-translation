@@ -1,13 +1,6 @@
 """Headless emulator helpers; test runs never persist battery saves."""
-import sys
 from PIL import Image, ImageChops
-from paths import ROOT
-try:
- from pyboy import PyBoy
-except ModuleNotFoundError:
- # Existing local analysis runtime; fresh clones install requirements.txt.
- sys.path.insert(0,str(ROOT/'analysis/_deps'))
- from pyboy import PyBoy
+from pyboy import PyBoy
 
 def boot(path):
     emu = PyBoy(str(path), window='null', sound_emulated=False)

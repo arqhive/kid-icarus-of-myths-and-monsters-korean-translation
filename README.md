@@ -11,7 +11,7 @@
 - 배포본은 원본 영문 ROM에 적용하는 **IPS 패치**입니다. ROM은 128 KiB에서 256 KiB로 확장하며 MBC2 배터리 저장 방식을 유지합니다.
 
 > Git 추적 대상에는 **게임 ROM, 추출한 원문 대사, 원본 그래픽, 스크린샷, 세이브가 들어 있지 않습니다.**
-> 패치를 만들거나 적용하려면 본인이 소유한 게임에서 직접 덤프한 원본이 필요합니다. 기존 분석·테스트 파일은 로컬에 보존하되 Git에서 제외합니다.
+> 패치를 만들거나 적용하려면 본인이 소유한 게임에서 직접 덤프한 원본이 필요합니다. 빌드·분석·테스트 산출물은 Git에서 제외합니다.
 
 ## 사용자용: 패치 적용
 
@@ -29,7 +29,7 @@
 
 ### 적용 방법
 
-로컬 배포 파일은 [`release/KidIcarus_KO_v0.1.zip`](release/KidIcarus_KO_v0.1.zip)입니다. 두 방법 중 하나만 사용합니다.
+배포 파일 이름은 `KidIcarus_KO_v0.1.zip`입니다. 아래 개발자용 빌드 절차로 로컬 `release/` 폴더에 생성할 수 있습니다. 준비된 ZIP은 다음 두 방법 중 하나로 적용합니다.
 
 1. ZIP을 폴더째 풉니다.
 2. 일반 IPS 패처에서 `KidIcarus_KO_v0.1.ips`와 **원본 영문 ROM**을 선택하고 별도 결과 파일을 만듭니다. 또는 압축을 푼 폴더에서 아래 명령을 실행합니다.
@@ -66,13 +66,18 @@ python apply_patch.py "원본.gb"
 
 프로젝트 루트에서 실행합니다.
 
-```bash
+```powershell
+python -m venv .venv
+# Windows PowerShell에서 가상 환경 활성화
+.\.venv\Scripts\Activate.ps1
 python -m pip install -r requirements.txt
 python tools/fetch_fonts.py
 python tools/build.py
 python tools/verify_build.py
 python tools/make_release.py v0.1
 ```
+
+이미 구성한 `.venv`는 재사용할 수 있습니다. PowerShell에서 활성화 스크립트를 실행할 수 없다면 `python` 대신 `.\.venv\Scripts\python.exe`를 사용하세요. 다른 운영체제에서는 해당 환경의 가상 환경 활성화 명령을 사용합니다.
 
 `build.py "원본.gb"`로 원본을 한 번 지정할 수도 있습니다. 이후 검증·패키징에도 같은 경로를 사용하려면 `KID_ICARUS_ROM`을 설정하거나 위 기본 위치에 원본을 두세요.
 
@@ -98,9 +103,10 @@ docs/            기술 문서, 검수 기록, 릴리즈 노트
 release/         사용자 설명서 (생성된 IPS·ZIP·해시 목록은 Git 제외)
 roms/            원본 ROM (Git 제외)
 work/            중간 ROM·최종 ROM·원문·화면·검증 결과 (Git 제외)
+.venv/           로컬 Python 빌드·검증 환경 (Git 제외)
 ```
 
-기존 `analysis/`, `korean_demo/`, `korean_full/`은 과거 작업 기록으로 보존하며 Git에서 제외합니다. 새 빌드에는 이 폴더의 게임 데이터나 기존 한글 ROM이 필요하지 않습니다. 현재 작업 환경의 `analysis/_deps`는 PyBoy가 별도 설치되지 않았을 때만 보조 경로로 사용합니다.
+이전 `analysis/`, `korean_demo/`, `korean_full/` 폴더는 정리했습니다. 새 빌드는 추적 중인 소스, 원본 ROM, 글꼴, Python 의존성만 사용합니다. `work/`의 중간 산출물은 빌드·검증 시 다시 생성되며, 정리 후에는 최신 완성 ROM만 남겨 둡니다.
 
 ### 기술 문서
 
