@@ -3,7 +3,7 @@
 *Kid Icarus: Of Myths and Monsters* (게임보이, 북미·유럽 공용판) 비공식 한국어 팬 패치입니다.
 영문판 원문을 기준으로 번역했습니다.
 
-**제작: arqhive** · **최신 버전: [v0.1](docs/releases/v0.1.md)**
+**제작: arqhive** · **최신 버전: [v0.1](https://github.com/arqhive/kid-icarus-of-myths-and-monsters-korean-translation/releases/tag/v0.1)**
 
 - 대사 테이블 39개를 모두 번역했습니다. 상점, 훈련, 무기, 저주 해제, 온천, 성장, 힌트, 최종 보스와 엔딩 대사가 들어 있습니다.
 - 타이틀 로고·부제·오프닝, 새 게임·이어하기, 상태창, 결과 화면, 저장 질문, 일시 정지, 게임 오버와 마지막 엔딩 문구를 한글로 바꿨습니다.
@@ -29,7 +29,7 @@
 
 ### 적용 방법
 
-배포 파일 이름은 `KidIcarus_KO_v0.1.zip`입니다. 아래 개발자용 빌드 절차로 로컬 `release/` 폴더에 생성할 수 있습니다. 준비된 ZIP은 다음 두 방법 중 하나로 적용합니다.
+[릴리즈 페이지](https://github.com/arqhive/kid-icarus-of-myths-and-monsters-korean-translation/releases/tag/v0.1)에서 `KidIcarus_KO_v0.1.zip`을 받습니다. 아래 개발자용 빌드 절차로 직접 만들 수도 있습니다. 준비된 ZIP은 다음 두 방법 중 하나로 적용합니다.
 
 1. ZIP을 폴더째 풉니다.
 2. 일반 IPS 패처에서 `KidIcarus_KO_v0.1.ips`와 **원본 영문 ROM**을 선택하고 별도 결과 파일을 만듭니다. 또는 압축을 푼 폴더에서 아래 명령을 실행합니다.
