@@ -45,7 +45,7 @@ python apply_patch.py "원본.gb"
 
 ### 실행 환경
 
-- **확인함**: 오프닝·타이틀, 힌트 방 대사, 상태창, 남은 기회 화면.
+- **확인함**: mGBA에서 오프닝·타이틀, 힌트 방 대사, 상태창, 남은 기회 화면.
 - 처음부터 끝까지 직접 클리어하는 전 구간 플레이 검증과 실기 검증은 하지 않았습니다.
 
 ### 알려진 문제
@@ -59,7 +59,7 @@ python apply_patch.py "원본.gb"
 
 ### 요구 사항
 
-- Python 3.11 이상과 [`requirements.txt`](requirements.txt)의 패키지(Pillow, PyBoy).
+- Python 3.11 이상과 [`requirements.txt`](requirements.txt)의 패키지(Pillow).
 - 위 해시에 맞는 원본 ROM. `roms/Kid Icarus - Of Myths and Monsters (USA, Europe).gb`에 두거나 `KID_ICARUS_ROM` 환경 변수로 경로를 지정합니다. 기존 작업 폴더 호환을 위해 루트의 같은 파일명도 인식합니다.
 - Galmuri7/Galmuri9/Galmuri11 BDF. `python tools/fetch_fonts.py`로 고정된 업스트림 커밋의 폰트를 내려받습니다. 폰트 파일은 Git에서 제외하고 출처·OFL 라이선스는 함께 보관합니다.
 
@@ -83,8 +83,8 @@ python tools/make_release.py v0.1
 `build.py "원본.gb"`로 원본을 한 번 지정할 수도 있습니다. 이후 검증·패키징에도 같은 경로를 사용하려면 `KID_ICARUS_ROM`을 설정하거나 위 기본 위치에 원본을 두세요.
 
 - `build.py`: 오프닝 → 타이틀 → 전체 텍스트를 메모리에서 차례로 빌드해 `work/Kid Icarus - Korean Full (Galmuri).gb` 하나와 `work/full/Kid_Icarus_Korean_Full.ips`를 만듭니다. Windows에서는 실제 바탕화면 위치를 찾아 완성본 한 개를 복사하고 해시 일치를 확인합니다.
-- `verify_build.py`: 체크섬·IPS 적용 결과, 대사 전체의 글자와 줄 배치, 주요 화면과 엔딩을 검사합니다. 받침 분리 이전 구조를 기준으로 작성되어 갱신이 필요합니다. 결과는 `work/full/verification.json`, 화면·상태 파일은 같은 폴더 아래에 생성됩니다. 사용자 배터리 세이브는 기록하지 않습니다.
-- `make_release.py v0.1`: 최종 ROM과 IPS 적용 결과가 같은지 확인한 뒤 IPS와 해시 확인 패처, 설명서·라이선스를 `release/KidIcarus_KO_v0.1.zip`으로 묶습니다. 원본 및 완성 ROM은 ZIP에 넣지 않습니다.
+- `verify_build.py`: 에뮬레이터 없이 ROM 데이터만 검사합니다. 체크섬·IPS 적용 결과, 원본 뱅크의 변경 위치, 코드 패치, 대사 39개의 글자·받침 그림과 줄 배치, UI 글자와 원본 그림 보존, 타이틀 ™·일시 정지·엔딩 글자를 확인합니다. 결과는 `work/full/verification.json`, 대사 재현 이미지는 `work/full/dialogue_pages.png`입니다. 화면 확인은 에뮬레이터에서 직접 합니다.
+- `make_release.py v0.1`: 검증을 통과한 ROM인지, IPS 적용 결과가 같은지 확인한 뒤 IPS와 해시 확인 패처, 설명서·라이선스를 `release/KidIcarus_KO_v0.1.zip`으로 묶습니다. 원본 및 완성 ROM은 ZIP에 넣지 않습니다.
 
 ### 번역 수정
 
@@ -97,7 +97,7 @@ python tools/make_release.py v0.1
 ### 폴더 구조
 
 ```
-tools/           원문 추출, 글꼴·타이틀·본문 빌드, 에뮬레이터 검증, IPS 적용·배포 도구
+tools/           원문 추출, 글꼴·타이틀·본문 빌드, ROM 데이터 검증, IPS 적용·배포 도구
   fonts/         글꼴 출처·OFL 라이선스 (다운로드한 BDF는 Git 제외)
 translation/     한국어 번역 데이터, 용어집
 docs/            기술 문서, 검수 기록, 릴리즈 노트

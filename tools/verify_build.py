@@ -1,134 +1,145 @@
-"""Emulator regression and native-renderer tests; RAM-directed scenes are identified."""
-import sys,json,hashlib
-from pathlib import Path
-from PIL import Image,ImageChops,ImageDraw
-from paths import ROOT, WORK
+"""Static verification of the built ROM. No emulator, no input automation.
+
+Screen checks are done by a person in a real emulator; this script checks that
+the ROM bytes match what the build intends and that original graphics survive.
+"""
+import hashlib,json
+from PIL import Image,ImageDraw
+from paths import WORK, KO
+from apply_patch import apply_ips
+from build_demo import load_glyphs,glyph_tile
+from hangul_stack import split,final_rows
+from build_full import (OUTPUT,SOURCE,EXPECTED_SHA256,LETTERS,KATAKANA,STATUS_SLOTS,CREDIT_POOL,
+                        STATUS_MAP,CREDIT_MAP,STAGE_FONT_BANK,CREDIT_FONT_BANK,DIALOGUE_BANK,
+                        PAGE_TABLE,DIALOGUE_CODE,dialogue_routine,ui_tile)
 HERE=WORK/'full'
-from emulator_utils import boot,tap,apply_ips,equal_screens
-import tempfile,build_title
-from build_full import OUTPUT,SOURCE,EXPECTED_SHA256,LETTERS
-ROM=OUTPUT.read_bytes();MAN=json.loads((HERE/'manifest.json').read_text(encoding='utf-8'))
-SCREENS=HERE/'screens';SCREENS.mkdir(exist_ok=True)
-def capture(p,name):p.screen.image.resize((480,432),Image.Resampling.NEAREST).save(SCREENS/(name+'.png'))
-def save(p,name):
- with (HERE/(name+'.state')).open('wb') as f:p.save_state(f)
-def load(name):
- p=boot(OUTPUT)
- with (HERE/(name+'.state')).open('rb') as f:p.load_state(f)
- return p
-def redirect(p,addr):
- p.memory[0xc026:0xc028]=[addr&255,addr>>8];p.memory[0xc02d]=1
+
+def check(condition,message):
+ if not condition:raise AssertionError(message)
+
+def call_target(rom,at):
+ check(rom[at]==0xcd,f'{at:05X}: expected CALL');return int.from_bytes(rom[at+1:at+3],'little')
+
 def main():
- original=SOURCE.read_bytes()
- assert hashlib.sha256(original).hexdigest()==EXPECTED_SHA256
- assert len(ROM)==0x40000 and ROM[0x147:0x149]==bytes([6,3])
+ original=SOURCE.read_bytes();rom=OUTPUT.read_bytes()
+ report={'output_sha256':hashlib.sha256(rom).hexdigest(),'method':'static ROM data checks; screens checked by hand in mGBA'}
+ # 1. Source, header, checksums, IPS, bank markers.
+ check(hashlib.sha256(original).hexdigest()==EXPECTED_SHA256,'Unexpected source ROM')
+ check(len(rom)==0x40000 and rom[0x147:0x149]==bytes([6,3]),'ROM size/type')
  c=0
- for v in ROM[0x134:0x14d]:c=(c-v-1)&255
- assert c==ROM[0x14d]
- assert (sum(ROM)-ROM[0x14e]-ROM[0x14f])&65535==int.from_bytes(ROM[0x14e:0x150],'big')
- assert apply_ips(original,(HERE/'Kid_Icarus_Korean_Full.ips').read_bytes())==ROM
- report={'output_sha256':hashlib.sha256(ROM).hexdigest(),'source_preserved':True,'checksums':'pass','ips_roundtrip':'pass','native_dialogue_pages':[],'ram_directed_scenes':True,'full_playthrough':False}
- # Baseline: the title stage without the full text patch, kept only for this run.
- title_rom=Path(tempfile.gettempdir())/'kid_icarus_title_stage.gb';title_rom.write_bytes(build_title.main())
- base=boot(title_rom);p=boot(OUTPUT)
- try:
-  for frames in [760,1040]:
-   for em in [base,p]:em.tick(frames,True)
-   assert equal_screens(base,p),'Opening/title differs from previous Korean build'
-  capture(p,'full_title')
-  for em in [base,p]:tap(em,'start');em.tick(180,True)
-  assert equal_screens(base,p),'Initial gameplay changed'
-  save(p,'full_game_start');capture(p,'full_game')
-  for em in [base,p]:
-   em.button_press('right');em.button_press('a');em.tick(45,True);em.button_release('right');em.button_release('a');em.button_press('b');em.tick(30,True);em.button_release('b');em.tick(45,True)
-  assert equal_screens(base,p),'Movement/attack changed'
-  report['initial_gameplay_movement_attack']='pixel-identical to previous build'
- finally:base.stop(save=False);p.stop(save=False)
- p=load('full_game_start')
- try:
-  tap(p,'start');p.tick(24,True);capture(p,'full_pause')
-  assert bytes(p.memory[0x8800:0x8850])==ROM[0x71a1:0x71f1]
-  tap(p,'start');p.tick(30,True);capture(p,'full_status')
-  assert bytes(p.memory[0x8800:0x9000])==ROM[0x30800:0x31000]
-  report['pause_status_fonts']='pass'
- finally:p.stop(save=False)
- # Enter an authentic first-stage shop via its unmodified room initializer.
- p=load('full_game_start')
- try:
-  p.memory[0xffb3]=1;p.memory[0xffb4]=0x20;redirect(p,0x36b1);p.tick(240,True)
-  p.button_press('right');p.tick(100,True);p.button_release('right');p.tick(200,True)
-  capture(p,'shop');save(p,'npc')
- finally:p.stop(save=False)
- # Invoke all records through the original VBlank dialogue state machine.
- # Only scene/state RAM is directed; release ROM code and pointers are exercised.
- for palette in [0x93,0xe1]:
-  p=load('npc')
-  try:
-   p.memory[0xc02a:0xc02c]=[0x86,2];p.memory[0xc02d]=3
-   p.memory[0xff47]=palette
-   for rec in MAN['dialogues']:
-    i=rec['id']
-    for addr,value in {0xc070:0,0xc071:i,0xc072:1,0xc073:0,0xc06e:0x47,0xc06f:0x99,0xc022:0x47,0xc023:0x0f,0xc02c:3}.items():p.memory[addr]=value
-    for frames in range(300):
-     p.tick(1,True)
-     if p.memory[0xc073]:break
-    else:raise AssertionError(('Dialogue did not finish',palette,i))
-    assert p.memory[0xc071]==i,(i,p.memory[0xc071])
-    row=0;col=0
-    for value in rec['bytes'][:-1]:
-     if value==0xfe:row+=1;col=0;continue
-     expected=LETTERS[value-1] if value else 0
-     assert p.memory[0x9947+row*32+col]==expected,('tilemap',i,row,col,value)
-     col+=1
-    for n,ch in enumerate(rec['characters']):
-     mask=ROM[0x28000+i*256+n*8:0x28008+i*256+n*8]
-     expected=bytes(b for v in mask for b in (v,v if palette==0xe1 else 0))
-     actual=bytes(p.memory[0x8000+LETTERS[n]*16:0x8010+LETTERS[n]*16])
-     assert expected==actual,('glyph',palette,i,ch,expected.hex(),actual.hex())
-    if palette==0x93:
-     capture(p,f'dialogue_{i:02}')
-     report['native_dialogue_pages'].append({'id':i,'frames':frames+1,'tilemap_and_glyphs':'pass'})
-   report[f'palette_{palette:02x}_all_39']='pass'
-  finally:p.stop(save=False)
- for credits,name in [(2,'continue'),(0,'game_over')]:
-  p=load('full_game_start')
-  try:
-   p.memory[0xc096]=credits;redirect(p,0x3857);p.tick(90,True);capture(p,name)
-   p.tick(30,True);capture(p,name+'_alternate')
-   report[name]='native scene initialized and rendered'
-  finally:p.stop(save=False)
- p=load('full_game_start')
- try:
-  redirect(p,0x3ce2);p.tick(900,True);capture(p,'stage_result');save(p,'stage_result')
-  report['stage_result']='native scene initialized and rendered'
- finally:p.stop(save=False)
- p=load('stage_result')
- try:
-  p.button_press('left');p.tick(70,True);p.button_release('left');p.tick(60,True)
-  capture(p,'save_prompt');save(p,'save_prompt')
-  tap(p,'down');capture(p,'save_no_selected')
-  report['save_prompt']='native prompt; both Korean options rendered'
-  tap(p,'up');tap(p,'a');p.tick(120,True)
-  assert bytes(p.memory[0xdb24:0xdb28])==b'KUMI'
-  assert p.memory[0xc065]==0x12
-  report['save_yes']='save signature in emulator RAM and transition to stage 1-2 verified; no user save file written'
- finally:p.stop(save=False)
- p=load('full_game_start')
- try:
-  redirect(p,0x2c1d)
-  for n in range(7000):
-   p.tick(1,True)
-   if p.memory[0xc065]==0x51 and p.memory[0xc071]==25 and p.memory[0xc073]==0x7f:
-    capture(p,'ending_dialogue')
-   if p.memory[0xc065]==0x52 and p.memory[0xc08e]==13:break
-  else:raise AssertionError('Ending did not complete')
-  p.tick(4,True);capture(p,'ending_final')
-  assert bytes(p.memory[0x8e50:0x8e80])==ROM[0x2fd00:0x2fd30]
-  for row in range(5):
-   assert bytes(p.memory[0x98c0+32*row:0x98cc+32*row])==ROM[0x2f0b8+12*row:0x2f0c4+12*row]
-  report['ending']='native ending sequence completed, final Korean glyphs and tilemap verified'
-  report['ending_frames']=n+1
- finally:p.stop(save=False)
+ for v in rom[0x134:0x14d]:c=(c-v-1)&255
+ check(c==rom[0x14d],'Header checksum')
+ check((sum(rom)-rom[0x14e]-rom[0x14f])&65535==int.from_bytes(rom[0x14e:0x150],'big'),'Global checksum')
+ check(apply_ips(original,(HERE/'Kid_Icarus_Korean_Full.ips').read_bytes())==rom,'IPS does not reproduce ROM')
+ check(all(rom[(b+1)*0x4000-1]==b for b in range(8,16)),'Bank number at 7FFF')
+ report['header_checksums_ips_banks']='pass'
+ # 2. Original banks 0-7 change only at known patch sites.
+ allowed=[(0x63,0x100),(0x147,0x150),(0xce7,0xcec),(0xf30,0xf31),(0x15b5,0x15b6),(0x1db0,0x1db1),
+          (0x1dc1,0x1dc8),(0x1e93,0x1e94),(0x388b,0x388e),(0x7042,0x7092),(0x71a1,0x71f1),
+          (0x17610,0x17616),(0x1788c,0x1788d),(0x178a3,0x178a8),(0x178d3,0x178d4),(0x17918,0x17ff0)]
+ for r in KO['labels']:
+  o=int(r['offset'],16);allowed.append((o,o+max(len(r['source_label']),3)))
+ stray=[i for i in range(0x20000) if rom[i]!=original[i] and not any(s<=i<e for s,e in allowed)]
+ check(not stray,('Unexpected changes in original banks',[hex(i) for i in stray[:16]]))
+ report['original_banks_only_patch_sites']='pass'
+ # 3. Code patches and the bank 10 dialogue routine.
+ dialogue=call_target(rom,0x178a3);status=call_target(rom,0x17610)
+ credit=call_target(rom,0x388b);ending=call_target(rom,0xce7)
+ check(all(0x63<=t<0x100 for t in (dialogue,status,credit,ending)),'Stub outside 0063-00FF')
+ check(rom[dialogue:dialogue+4]==bytes([0xe5,0xd5,0x3e,DIALOGUE_BANK]),'Dialogue stub bank')
+ check(rom[status+2:status+4]==bytes([0x3e,STAGE_FONT_BANK]),'Status stub bank')
+ check(rom[credit:credit+2]==bytes([0x3e,CREDIT_FONT_BANK]),'Credit stub bank')
+ check(rom[0x15b5]==STAGE_FONT_BANK and rom[0x1788c]==0x40 and rom[0xf30]==0x27 and rom[0x178d3]==6,'Layout patches')
+ bank=DIALOGUE_BANK*0x4000
+ routine=dialogue_routine()
+ check(rom[bank+DIALOGUE_CODE-0x4000:bank+DIALOGUE_CODE-0x4000+len(routine)]==routine,'Dialogue routine')
+ check(rom[bank+0x3fc0:bank+0x3fc0+26]==bytes(LETTERS),'Letter tile table')
+ report['code_patches']='pass'
+ # 4. Rebuild every dialogue page from ROM data and compare with the translation.
+ glyphs=load_glyphs();pages=[]
+ for i,lines in enumerate(KO['dialogues']):
+  ptr=int.from_bytes(rom[0x17918+i*2:0x1791a+i*2],'little');p=0x10000+ptr
+  table=rom[bank+PAGE_TABLE-0x4000+i*64:bank+PAGE_TABLE-0x4000+i*64+64]
+  glyph=lambda slot:rom[bank+i*256+slot*8:bank+i*256+slot*8+8]
+  row=col=0;text=['']
+  cells={}
+  while rom[p] not in (0xfd,0xff):
+   b=rom[p];p+=1
+   if b==0xfe:row+=2;col=0;text.append('');continue
+   if b==0:text[-1]+=' ';col+=1;continue
+   check(b<32,('Code out of range',i,b))
+   top,fin=table[b],table[32+b]
+   check(top<26 and fin<=26,('Slot out of range',i,b))
+   cells[(row,col)]=glyph(top)
+   if fin:cells[(row+1,col)]=glyph(fin-1)
+   text[-1]+=chr(b);col+=1
+   check(col<=18,('Line too long',i))
+  check(row+1<6,('Dialogue taller than the six cleared rows',i))
+  # Map codes back to the intended syllables and compare glyph bitmaps.
+  check(len(text)==len(lines),('Line count',i))
+  for line,(encoded) in zip(lines,text):
+   pad=(18-len(line))//2
+   check(encoded[:pad]==' '*pad and len(encoded)==pad+len(line),('Centering',i,line))
+   for ch,code in zip(line,encoded[pad:]):
+    if ch==' ':check(code==' ',('Space',i));continue
+    top,f=split(ch)
+    check(glyph(table[ord(code)])==glyph_tile(top,glyphs)[::2],('Top glyph',i,ch))
+    fin=table[32+ord(code)]
+    check((fin==0)==(f==0),('Final presence',i,ch))
+    if f:check(glyph(fin-1)==final_rows(f),('Final glyph',i,ch))
+  pages.append(cells)
+ report['dialogue_pages']=f'{len(pages)} pages: text, glyphs, finals and box height pass'
+ Z=2;sheet=Image.new('L',(2*(18*8+8)*Z,20*(6*8+10)*Z),40);dr=ImageDraw.Draw(sheet)
+ for i,cells in enumerate(pages):
+  ox=(i%2)*(18*8+8)*Z;oy=(i//2)*(6*8+10)*Z
+  dr.rectangle([ox,oy,ox+18*8*Z,oy+6*8*Z],fill=0)
+  for (r,cl),g in cells.items():
+   for y in range(8):
+    for x in range(8):
+     if g[y]>>(7-x)&1:dr.rectangle([ox+(cl*8+x)*Z,oy+(r*8+y)*Z,ox+(cl*8+x)*Z+Z-1,oy+(r*8+y)*Z+Z-1],fill=255)
+  dr.text((ox+2,oy+6*8*Z+2),str(i),fill=200)
+ sheet.save(HERE/'dialogue_pages.png')
+ # 5. UI fonts: stage font keeps every original tile except the katakana.
+ font=lambda b,t:rom[b*0x4000+0x800+(t-0x80)*16:b*0x4000+0x800+(t-0x80)*16+16]
+ orig=lambda t:original[0x8800+(t-0x80)*16:0x8800+(t-0x80)*16+16]
+ stage=STAGE_FONT_BANK*0x4000;cred=CREDIT_FONT_BANK*0x4000
+ check(rom[stage:stage+0x800]==original[0x8000:0x8800] and rom[stage+0x1000:stage+0x2000]==original[0x9000:0xa000],'Stage font outside 8800 block')
+ changed=[t for t in range(0x80,0x100) if font(STAGE_FONT_BANK,t)!=orig(t)]
+ check(set(changed)<=set(KATAKANA),('Stage font changed original graphics',[hex(t) for t in changed]))
+ changed=[t for t in range(0x80,0x100) if font(CREDIT_FONT_BANK,t)!=orig(t)]
+ check(set(changed)<=set(KATAKANA)|set(CREDIT_POOL),('Credit font changed unexpected tiles',[hex(t) for t in changed]))
+ def ui_glyph(context,t):
+  if context=='status' and t in STATUS_SLOTS:
+   return rom[stage+0x3e00+(t-0x94)*16:stage+0x3e00+(t-0x94)*16+16]
+  return font(CREDIT_FONT_BANK if context=='credit' else STAGE_FONT_BANK,t)
+ blank={0x8a,0}
+ for r in KO['labels']:
+  o=int(r['offset'],16);ko=r['korean'];width=max(len(r['source_label']),3 if r['source_label']=='NO' else 0)
+  context='status' if STATUS_MAP[0]<=o<STATUS_MAP[1] else 'credit' if CREDIT_MAP[0]<=o<CREDIT_MAP[1] else 'kata'
+  tiles=[t for t in rom[o:o+width] if t not in blank]
+  chars=[c for c in ko if c!=' ']
+  check(len(tiles)==len(chars),('Label tile count',r['source_label']))
+  for c,t in zip(chars,tiles):
+   if c=='?':check(t==0xc1,'?');continue
+   check(ui_glyph(context,t)==ui_tile(c,glyphs),('Label glyph',r['source_label'],c,hex(t)))
+   if context=='kata':check(font(CREDIT_FONT_BANK,t)==font(STAGE_FONT_BANK,t),('Shared label differs between fonts',c))
+ for r in KO['sprites']:
+  o=int(r['offset'],16);tiles=[rom[o+n*4+2] for n in range(10)]
+  tiles=[t for t in tiles if t!=0x8a];chars=[c for c in r['korean'] if c!=' ']
+  check(len(tiles)==len(chars),('Sprite tile count',r['source_label']))
+  for c,t in zip(chars,tiles):
+   if c=='!':check(t==0xc5,'!');continue
+   check(font(CREDIT_FONT_BANK,t)==ui_tile(c,glyphs),('Sprite glyph',r['source_label'],c))
+ report['ui_fonts']='pass: stage font keeps original graphics; labels and sprites point at matching glyphs'
+ # 6. Title trademark, pause and ending glyphs.
+ tm=rom[0x23402+3*20+19]
+ check(tm<0x80 and rom[0x24000+tm*16:0x24010+tm*16]==original[0x1c000+0x47*16:0x1c010+0x47*16],'Title trademark tile')
+ for n,c in enumerate(KO['pause']):
+  check(rom[0x71a1+n*16:0x71b1+n*16]==(bytes(16) if c==' ' else glyph_tile(c,glyphs)),('Pause glyph',c))
+ chars=list(dict.fromkeys(''.join(r['korean'] for r in KO['ending'])))
+ for n,c in enumerate(chars):check(rom[0x2fd00+n*16:0x2fd10+n*16]==glyph_tile(c,glyphs),('Ending glyph',c))
+ report['title_pause_ending']='pass'
  (HERE/'verification.json').write_text(json.dumps(report,ensure_ascii=False,indent=2),encoding='utf-8')
  print(json.dumps(report,ensure_ascii=False,indent=2))
+
 if __name__=='__main__':main()
