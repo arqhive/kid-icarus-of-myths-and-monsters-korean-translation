@@ -189,12 +189,14 @@
     {
       "offset": "0x16511",
       "source_label": "STAGE",
-      "korean": "구역"
+      "korean": "구역",
+      "align": "left"
     },
     {
       "offset": "0x16525",
       "source_label": "STRENGTH",
-      "korean": "공격력"
+      "korean": "공격력",
+      "align": "left"
     },
     {
       "offset": "0x16554",

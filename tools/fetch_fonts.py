@@ -4,7 +4,7 @@ import hashlib
 import urllib.request
 
 COMMIT = '71e1cacf1437a11220307120e63e30bc275312d4'
-HASHES = {'Galmuri7.bdf': '0ec6b8707e8c47d85995b5b2b507180aed7bcc724792fe5477e998d41f8b075f', 'Galmuri11.bdf': '98716d08aa5762e6ce440d5a757d107cb5d3f32a53861878be06c00aacc23304'}
+HASHES = {'Galmuri7.bdf': '0ec6b8707e8c47d85995b5b2b507180aed7bcc724792fe5477e998d41f8b075f', 'Galmuri11.bdf': '98716d08aa5762e6ce440d5a757d107cb5d3f32a53861878be06c00aacc23304', 'Galmuri9.bdf': 'cc9b6d6f660d8391016be7691b3fc3f864bfa3b095f67bc5e830e9b03ce42162'}
 
 def main():
     folder = Path(__file__).resolve().parent/'fonts'

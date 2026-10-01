@@ -96,16 +96,28 @@ def main():
     for x,y in face:
         # 1 is white and 2 is dark gray under the game's E1 palette.
         pixels[y][x] = 2 if (x+1,y+1) not in face else 1
-    subtitle_width = sum(4 if c==' ' else 8 for c in SUBTITLE)-1
+    # Restore the original trademark tile at its original place (row 3, column 19).
+    trademark = decode_tile(low[0x47])
+    for y in range(8):
+        for x in range(8):
+            if trademark[y][x]:
+                assert pixels[24+y][152+x] == 0, 'Logo overlaps trademark'
+                pixels[24+y][152+x] = trademark[y][x]
+    # Galmuri9 Hangul (9x9) keeps the final consonant of 물 legible; rows 63-71.
+    sub = font(FONTS/'Galmuri9.bdf')
+    advance = lambda c: 4 if c==' ' else sub[c][0]+1
+    subtitle_width = sum(advance(c) for c in SUBTITLE)-1
     cursor = (160-subtitle_width)//2
     for char in SUBTITLE:
         if char == ' ':
             cursor += 4
             continue
-        width,height,xoff,yoff,points = small[char]
+        width,height,xoff,yoff,points = sub[char]
         for x,y in points:
-            pixels[64+7-height-yoff+y][cursor+x] = 3
-        cursor += 8
+            yy = 72-height-yoff+y
+            assert pixels[yy][cursor+x] == 0, 'Subtitle overlaps title shadow'
+            pixels[yy][cursor+x] = 3
+        cursor += width+1
     left = (160-subtitle_width)//2
     for x in range(22,left-7):
         pixels[67][x] = 3
