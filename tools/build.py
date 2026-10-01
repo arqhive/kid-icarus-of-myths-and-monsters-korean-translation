@@ -10,13 +10,9 @@ def main():
     args = parser.parse_args()
     if args.rom:
         os.environ['KID_ICARUS_ROM'] = str(Path(args.rom).resolve())
-    import build_demo
-    import build_title
     import build_full
     from desktop import copy_to_desktop
-    build_demo.main()
-    build_title.main()
-    build_full.main()
+    build_full.main()  # opening and title stages are built in memory
     copy_to_desktop(build_full.OUTPUT)
 
 

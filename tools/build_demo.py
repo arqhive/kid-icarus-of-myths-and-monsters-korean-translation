@@ -8,7 +8,6 @@ from PIL import Image, ImageDraw
 from paths import ROOT, WORK, SOURCE, EXPECTED_SHA256, FONTS, KO
 HERE = WORK/'opening'
 HERE.mkdir(parents=True, exist_ok=True)
-OUTPUT = WORK/'Kid Icarus - Korean Opening (Galmuri7).gb'
 FONT = FONTS/'Galmuri7.bdf'
 OPENING = KO['opening']
 MENU = KO['menu']
@@ -57,6 +56,7 @@ def make_ips(original, patched):
 
 
 def main():
+    """Return the opening-stage ROM bytes; only build_full writes a ROM."""
     original = SOURCE.read_bytes()
     assert hashlib.sha256(original).hexdigest() == EXPECTED_SHA256, 'Unexpected source ROM'
     assert len(OPENING) == 27 and all(len(line) <= 20 for line in OPENING)
@@ -98,12 +98,10 @@ def main():
     rom[0x14D] = checksum
     rom[0x14E:0x150] = b'\0\0'
     rom[0x14E:0x150] = (sum(rom)&65535).to_bytes(2, 'big')
-    OUTPUT.write_bytes(rom)
-    (HERE/'Korean_Opening_Galmuri7.ips').write_bytes(make_ips(original, rom))
     (HERE/'translation_ko.txt').write_text('\n'.join(OPENING)+'\n\nNEW GAME → 새 게임\nCONTINUE → 이어하기\n', encoding='utf-8')
     (HERE/'korean.tbl').write_text('\n'.join(f'{tile:02X}={char}' for char, tile in table.items()), encoding='utf-8')
     manifest = {
-        'rom': OUTPUT.name, 'source_sha256': EXPECTED_SHA256,
+        'stage': 'opening', 'source_sha256': EXPECTED_SHA256,
         'output_sha256': hashlib.sha256(rom).hexdigest(),
         'font_sha256': hashlib.sha256(FONT.read_bytes()).hexdigest(),
         'font': 'Galmuri7 native BDF glyphs, no scaling',
@@ -123,6 +121,7 @@ def main():
                 color = ((raw[y*2]>>(7-x))&1) | (((raw[y*2+1]>>(7-x))&1)<<1)
                 preview.putpixel((pos%20*8+x, pos//20*8+y), [(160,160,160),(100,100,100),(60,60,60),(0,0,0)][color])
     preview.resize((480,768), Image.Resampling.NEAREST).save(HERE/'opening_layout.png')
+    return bytes(rom)
     print(json.dumps(manifest, indent=2, ensure_ascii=False))
 
 

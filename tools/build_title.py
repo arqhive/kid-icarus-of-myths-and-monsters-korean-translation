@@ -4,13 +4,13 @@ import hashlib
 import json
 import re
 from PIL import Image
-from build_demo import SOURCE, OUTPUT as OPENING_ROM, make_ips
+import build_demo
+from build_demo import SOURCE
 
 from paths import ROOT, WORK, FONTS, KO
 HERE = FONTS.parent
 OUT = WORK/'title'
 OUT.mkdir(parents=True, exist_ok=True)
-OUTPUT = WORK/'Kid Icarus - Korean Title and Opening (Galmuri).gb'
 TITLE = KO['title']
 SUBTITLE = KO['subtitle']
 
@@ -49,9 +49,11 @@ def encode_tile(pixels):
     return bytes(result)
 
 
-def main():
+def main(base=None):
+    """Return the title-stage ROM bytes built on the opening stage."""
     original = SOURCE.read_bytes()
-    base = OPENING_ROM.read_bytes()
+    if base is None:
+        base = build_demo.main()
     rom = bytearray(base)
     small = font(FONTS/'Galmuri7.bdf')
     large = font(FONTS/'Galmuri11.bdf')
@@ -151,8 +153,6 @@ def main():
     rom[0x1DB0] = 9
     rom[0x14E:0x150] = b'\0\0'
     rom[0x14E:0x150] = (sum(rom)&65535).to_bytes(2,'big')
-    OUTPUT.write_bytes(rom)
-    (OUT/'Korean_Title_and_Opening.ips').write_bytes(make_ips(original,rom))
     # Palette E1 maps native pixel IDs to [gray, white, dark gray, black].
     colors = [(153,153,153),(255,255,255),(85,85,85),(0,0,0)]
     preview = Image.new('RGB',(160,144))
@@ -160,7 +160,7 @@ def main():
         for x in range(160):
             preview.putpixel((x,y),colors[pixels[y][x]])
     preview.resize((640,576),Image.Resampling.NEAREST).save(OUT/'title_design.png')
-    manifest = {'rom':OUTPUT.name,'title':TITLE,'subtitle':SUBTITLE,
+    manifest = {'stage':'title','title':TITLE,'subtitle':SUBTITLE,
                 'font':'Galmuri11 title / Galmuri7 subtitle and opening',
                 'title_low_bank_tiles':len(compiled),'preserved_low_tile_ids':sorted(kept_ids),
                 'new_graphics_bank':9,'input_sha256':hashlib.sha256(base).hexdigest(),
@@ -168,6 +168,7 @@ def main():
                 'font_sha256':hashlib.sha256((FONTS/'Galmuri11.bdf').read_bytes()).hexdigest()}
     (OUT/'build_manifest.json').write_text(json.dumps(manifest,indent=2,ensure_ascii=False),encoding='utf-8')
     print(json.dumps(manifest,indent=2,ensure_ascii=False))
+    return bytes(rom)
 
 
 if __name__=='__main__':

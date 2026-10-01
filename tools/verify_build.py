@@ -5,7 +5,7 @@ from PIL import Image,ImageChops,ImageDraw
 from paths import ROOT, WORK
 HERE=WORK/'full'
 from emulator_utils import boot,tap,apply_ips,equal_screens
-from build_title import OUTPUT as TITLE_ROM
+import tempfile,build_title
 from build_full import OUTPUT,SOURCE,EXPECTED_SHA256,LETTERS
 ROM=OUTPUT.read_bytes();MAN=json.loads((HERE/'manifest.json').read_text(encoding='utf-8'))
 SCREENS=HERE/'screens';SCREENS.mkdir(exist_ok=True)
@@ -28,7 +28,9 @@ def main():
  assert (sum(ROM)-ROM[0x14e]-ROM[0x14f])&65535==int.from_bytes(ROM[0x14e:0x150],'big')
  assert apply_ips(original,(HERE/'Kid_Icarus_Korean_Full.ips').read_bytes())==ROM
  report={'output_sha256':hashlib.sha256(ROM).hexdigest(),'source_preserved':True,'checksums':'pass','ips_roundtrip':'pass','native_dialogue_pages':[],'ram_directed_scenes':True,'full_playthrough':False}
- base=boot(TITLE_ROM);p=boot(OUTPUT)
+ # Baseline: the title stage without the full text patch, kept only for this run.
+ title_rom=Path(tempfile.gettempdir())/'kid_icarus_title_stage.gb';title_rom.write_bytes(build_title.main())
+ base=boot(title_rom);p=boot(OUTPUT)
  try:
   for frames in [760,1040]:
    for em in [base,p]:em.tick(frames,True)

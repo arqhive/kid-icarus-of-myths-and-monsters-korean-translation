@@ -5,7 +5,7 @@ from paths import ROOT, WORK, KO
 HERE=WORK/'full'
 HERE.mkdir(parents=True,exist_ok=True)
 from build_demo import load_glyphs,glyph_tile,make_ips,EXPECTED_SHA256,SOURCE
-from build_title import OUTPUT as TITLE_ROM
+import build_title
 from extract_text import dialogues,TABLE
 from hangul_stack import split,final_rows
 DIALOGUES=KO['dialogues']
@@ -66,9 +66,9 @@ def dialogue_routine():
  a.label('waitv');a.emit('f0 41 e6 02');a.jr('20','waitv');a.emit('c9')
  return a.finish()
 
-def main():
+def main(base=None):
  original=SOURCE.read_bytes();assert hashlib.sha256(original).hexdigest()==EXPECTED_SHA256
- rom=bytearray(TITLE_ROM.read_bytes())
+ rom=bytearray(base if base is not None else build_title.main())
  assert len(rom)==0x40000 and rom[0x1db0]==9 and rom[0x1dc1]==8
  glyphs=load_glyphs();records=dialogues()
  assert len(DIALOGUES)==len(records)==39

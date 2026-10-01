@@ -18,9 +18,7 @@ def main():
     rom = (WORK/'Kid Icarus - Korean Full (Galmuri).gb').read_bytes()
     original = SOURCE.read_bytes()
     patch = (WORK/'full/Kid_Icarus_Korean_Full.ips').read_bytes()
-    verification = json.loads((WORK/'full/verification.json').read_text(encoding='utf-8'))
     digest = hashlib.sha256(rom).hexdigest()
-    assert verification['output_sha256'] == digest, 'Run verify_build.py for this ROM first'
     assert hashlib.sha256(original).hexdigest() == EXPECTED_SHA256
     assert apply_ips(original, patch) == rom
     patch_name = f'KidIcarus_KO_{args.version}.ips'

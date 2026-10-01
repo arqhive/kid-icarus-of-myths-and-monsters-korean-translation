@@ -7,7 +7,7 @@
 
 - 대사 테이블 39개를 모두 번역했습니다. 상점, 훈련, 무기, 저주 해제, 온천, 성장, 힌트, 최종 보스와 엔딩 대사가 들어 있습니다.
 - 타이틀 로고·부제·오프닝, 새 게임·이어하기, 상태창, 결과 화면, 저장 질문, 일시 정지, 게임 오버와 마지막 엔딩 문구를 한글로 바꿨습니다.
-- 본문은 Galmuri7, 타이틀은 Galmuri11/Galmuri7로 그립니다. 한글 글꼴이 ROM에 들어 있어 에뮬레이터에 별도 폰트를 설치할 필요가 없습니다.
+- 대사는 Galmuri7로 그리고 받침은 글자 아래 칸에 따로 그려 읽기 쉽게 했습니다. 타이틀은 Galmuri11, 부제는 Galmuri9로 그립니다. 한글 글꼴이 ROM에 들어 있어 에뮬레이터에 별도 폰트를 설치할 필요가 없습니다.
 - 배포본은 원본 영문 ROM에 적용하는 **IPS 패치**입니다. ROM은 128 KiB에서 256 KiB로 확장하며 MBC2 배터리 저장 방식을 유지합니다.
 
 > Git 추적 대상에는 **게임 ROM, 추출한 원문 대사, 원본 그래픽, 스크린샷, 세이브가 들어 있지 않습니다.**
@@ -24,7 +24,7 @@
 | 항목 | 값 |
 |---|---|
 | 원본 SHA-256 | `92c1fbf422abb8f09ca7fdbb563d1284108cc042e60e1222422986d9a59f9d97` |
-| v0.1 결과 SHA-256 | `892e9f56265ca0be9eb62305ef4949a9438166648e71db6ea681adb7f830d9c2` |
+| v0.1 결과 SHA-256 | `8b881b554cd49b907512bd82d21f6b74c4815ecb13be720490c863a20538719f` |
 | 결과 크기 | 262,144바이트 (256 KiB) |
 
 ### 적용 방법
@@ -45,12 +45,13 @@ python apply_patch.py "원본.gb"
 
 ### 실행 환경
 
-- **확인함**: PyBoy 2.7.0에서 오프닝·타이틀·초반 이동/점프/공격, 대사 39개, 상태창, 저장 선택 후 다음 구역, 게임 오버, 엔딩 연출.
-- 전체 대사 및 후반 장면 검사는 에뮬레이터 RAM으로 장면을 지정하는 방식도 사용했습니다. 처음부터 끝까지 직접 클리어하는 전 구간 플레이 검증과 실기 검증은 하지 않았습니다.
+- **확인함**: 오프닝·타이틀, 힌트 방 대사, 상태창, 남은 기회 화면.
+- 처음부터 끝까지 직접 클리어하는 전 구간 플레이 검증과 실기 검증은 하지 않았습니다.
 
 ### 알려진 문제
 
 - 현재 검사 범위에서 추가 번역 누락은 발견되지 않았습니다. 드문 조건의 장면 전환은 플레이 검수가 더 필요합니다.
+- 대사 세 번째 줄의 받침은 대사 상자 바로 아래 줄에 표시됩니다. 장면에 따라 이 줄이 가려지거나 배경과 겹치는지 검수가 더 필요합니다.
 - 기존 버전의 세이브 스테이트는 변경된 대사 주소·글꼴과 맞지 않을 수 있습니다.
 - Nintendo 상표·저작권 표기와 내부 카트리지 제목은 유지했습니다. 사용하지 않는 원문 리소스도 ROM 안에 남아 있으나, 확인한 출력 경로는 한글 데이터를 사용합니다.
 
@@ -60,7 +61,7 @@ python apply_patch.py "원본.gb"
 
 - Python 3.11 이상과 [`requirements.txt`](requirements.txt)의 패키지(Pillow, PyBoy).
 - 위 해시에 맞는 원본 ROM. `roms/Kid Icarus - Of Myths and Monsters (USA, Europe).gb`에 두거나 `KID_ICARUS_ROM` 환경 변수로 경로를 지정합니다. 기존 작업 폴더 호환을 위해 루트의 같은 파일명도 인식합니다.
-- Galmuri7/Galmuri11 BDF. `python tools/fetch_fonts.py`로 고정된 업스트림 커밋의 폰트를 내려받습니다. 폰트 파일은 Git에서 제외하고 출처·OFL 라이선스는 함께 보관합니다.
+- Galmuri7/Galmuri9/Galmuri11 BDF. `python tools/fetch_fonts.py`로 고정된 업스트림 커밋의 폰트를 내려받습니다. 폰트 파일은 Git에서 제외하고 출처·OFL 라이선스는 함께 보관합니다.
 
 ### 빌드
 
@@ -81,14 +82,14 @@ python tools/make_release.py v0.1
 
 `build.py "원본.gb"`로 원본을 한 번 지정할 수도 있습니다. 이후 검증·패키징에도 같은 경로를 사용하려면 `KID_ICARUS_ROM`을 설정하거나 위 기본 위치에 원본을 두세요.
 
-- `build.py`: 오프닝 → 타이틀 → 전체 텍스트를 순서대로 빌드해 `work/Kid Icarus - Korean Full (Galmuri).gb`를 만듭니다. Windows에서는 실제 바탕화면 위치를 찾아 완성본 한 개를 복사하고 해시 일치를 확인합니다.
-- `verify_build.py`: 체크섬·IPS 적용 결과, 대사 전체의 글자와 줄 배치, 주요 화면과 엔딩을 검사합니다. 결과는 `work/full/verification.json`, 화면·상태 파일은 같은 폴더 아래에 생성됩니다. 사용자 배터리 세이브는 기록하지 않습니다.
-- `make_release.py v0.1`: 검증한 ROM의 IPS와 해시 확인 패처, 설명서·라이선스를 `release/KidIcarus_KO_v0.1.zip`으로 묶습니다. 원본 및 완성 ROM은 ZIP에 넣지 않습니다.
+- `build.py`: 오프닝 → 타이틀 → 전체 텍스트를 메모리에서 차례로 빌드해 `work/Kid Icarus - Korean Full (Galmuri).gb` 하나와 `work/full/Kid_Icarus_Korean_Full.ips`를 만듭니다. Windows에서는 실제 바탕화면 위치를 찾아 완성본 한 개를 복사하고 해시 일치를 확인합니다.
+- `verify_build.py`: 체크섬·IPS 적용 결과, 대사 전체의 글자와 줄 배치, 주요 화면과 엔딩을 검사합니다. 받침 분리 이전 구조를 기준으로 작성되어 갱신이 필요합니다. 결과는 `work/full/verification.json`, 화면·상태 파일은 같은 폴더 아래에 생성됩니다. 사용자 배터리 세이브는 기록하지 않습니다.
+- `make_release.py v0.1`: 최종 ROM과 IPS 적용 결과가 같은지 확인한 뒤 IPS와 해시 확인 패처, 설명서·라이선스를 `release/KidIcarus_KO_v0.1.zip`으로 묶습니다. 원본 및 완성 ROM은 ZIP에 넣지 않습니다.
 
 ### 번역 수정
 
 - [`translation/ko.json`](translation/ko.json)의 `opening`, `menu`, `dialogues`, `labels`, `sprites`, `pause`, `ending`, `title`, `subtitle`을 수정합니다.
-- 일반 대사는 한 줄 18칸, 한 페이지 3줄, 공백을 제외한 고유 글자 26개 이하입니다. 오프닝은 27줄의 페이지 구조와 한 줄 20칸 제한을 유지합니다. 빌드에서 제한을 검사합니다.
+- 일반 대사는 한 줄 18칸, 한 페이지 3줄, 위 글자와 받침 글자를 합쳐 26칸 이하입니다. 오프닝은 27줄의 페이지 구조와 한 줄 20칸 제한을 유지합니다. 빌드에서 제한을 검사합니다.
 - 대사 번호·개수와 FD/FF 제어코드는 원본에서 가져옵니다. 연속 문장은 한국어 어순에 맞게 페이지 사이 표현을 조정했습니다.
 - `python tools/extract_text.py`로 원문을 로컬 `work/full/dialogues_en.json`에 추출할 수 있습니다. 전체 빌드의 `manifest.json`에도 원문·번역문·위치가 기록됩니다. 이 파일들은 Git에서 제외합니다.
 - 용어는 [`translation/GLOSSARY.md`](translation/GLOSSARY.md), 검수 범위는 [`docs/VERIFICATION.md`](docs/VERIFICATION.md)를 참고하세요.
@@ -102,7 +103,7 @@ translation/     한국어 번역 데이터, 용어집
 docs/            기술 문서, 검수 기록, 릴리즈 노트
 release/         사용자 설명서 (생성된 IPS·ZIP·해시 목록은 Git 제외)
 roms/            원본 ROM (Git 제외)
-work/            중간 ROM·최종 ROM·원문·화면·검증 결과 (Git 제외)
+work/            최종 ROM·IPS·원문·미리보기·검증 결과 (Git 제외)
 .venv/           로컬 Python 빌드·검증 환경 (Git 제외)
 ```
 
@@ -119,7 +120,7 @@ ROM 뱅크, 문자 인코딩, 동적 글꼴과 타이틀 처리 방식은 [`docs
 ## 크레딧·라이선스
 
 - 이 저장소의 도구 코드, 한국어 번역문, 문서: [MIT License](LICENSE) (© 2026 arqhive).
-- 글꼴: quiple / Lee Minseo의 Galmuri7·Galmuri11, [SIL Open Font License 1.1](tools/fonts/OFL.txt). 사용한 커밋과 원본 파일 위치는 `tools/fonts/SOURCE*.txt`에 기록했습니다.
+- 글꼴: quiple / Lee Minseo의 Galmuri7·Galmuri9·Galmuri11, [SIL Open Font License 1.1](tools/fonts/OFL.txt). 사용한 커밋과 원본 파일 위치는 `tools/fonts/SOURCE*.txt`에 기록했습니다.
 - 타이틀의 한글은 Galmuri 글립을 정수 배율로 그려 게임보이 타일로 변환합니다.
 
 ## 면책
