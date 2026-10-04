@@ -11,7 +11,7 @@ from build_demo import load_glyphs,glyph_tile
 from hangul_stack import split,final_rows
 from build_full import (OUTPUT,SOURCE,EXPECTED_SHA256,LETTERS,KATAKANA,STATUS_SLOTS,CREDIT_POOL,
                         STATUS_MAP,CREDIT_MAP,STAGE_FONT_BANK,CREDIT_FONT_BANK,DIALOGUE_BANK,
-                        PAGE_TABLE,DIALOGUE_CODE,dialogue_routine,ui_tile)
+                        PAGE_TABLE,DIALOGUE_CODE,LAST_PAGE,dialogue_routine,ui_tile)
 HERE=WORK/'full'
 
 def check(condition,message):
@@ -34,7 +34,7 @@ def main():
  check(all(rom[(b+1)*0x4000-1]==b for b in range(8,16)),'Bank number at 7FFF')
  report['header_checksums_ips_banks']='pass'
  # 2. Original banks 0-7 change only at known patch sites.
- allowed=[(0x63,0x100),(0x147,0x150),(0xce7,0xcec),(0xf30,0xf31),(0x15b5,0x15b6),(0x1db0,0x1db1),
+ allowed=[(0x63,0x100),(0x147,0x150),(0xce7,0xcec),(0xf30,0xf31),(0x15b5,0x15b6),(0x15cb,0x15ce),(0x1db0,0x1db1),
           (0x1dc1,0x1dc8),(0x1e93,0x1e94),(0x388b,0x388e),(0x7042,0x7092),(0x71a1,0x71f1),
           (0x17610,0x17616),(0x1788c,0x1788d),(0x178a3,0x178a8),(0x178d3,0x178d4),(0x17918,0x17ff0)]
  for r in KO['labels']:
@@ -45,6 +45,8 @@ def main():
  # 3. Code patches and the bank 10 dialogue routine.
  dialogue=call_target(rom,0x178a3);status=call_target(rom,0x17610)
  credit=call_target(rom,0x388b);ending=call_target(rom,0xce7)
+ check(rom[0x15cb]==0xc3,'Stage font reload hook');reload=int.from_bytes(rom[0x15cc:0x15ce],'little')
+ check(0x63<=reload<0x100 and rom[reload:reload+3]==bytes.fromhex('cd b6 03') and rom[reload+3:reload+5]==bytes([0xf0,LAST_PAGE]) and rom[reload+8:reload+10]==bytes([0x3e,DIALOGUE_BANK]),'Reload stub')
  check(all(0x63<=t<0x100 for t in (dialogue,status,credit,ending)),'Stub outside 0063-00FF')
  check(rom[dialogue:dialogue+4]==bytes([0xe5,0xd5,0x3e,DIALOGUE_BANK]),'Dialogue stub bank')
  check(rom[status+2:status+4]==bytes([0x3e,STAGE_FONT_BANK]),'Status stub bank')

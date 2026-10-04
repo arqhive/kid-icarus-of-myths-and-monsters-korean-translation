@@ -25,6 +25,7 @@ CREDIT_FONT_BANK=12
 DIALOGUE_BANK=10
 PAGE_TABLE=0x6800                 # per page: 32 top slots, 32 final slots
 DIALOGUE_CODE=0x7400
+LAST_PAGE=0x96                    # HRAM FF96: unreferenced by the game; last printed dialogue page
 
 class Asm:
  def __init__(self,start):self.start=start;self.data=bytearray();self.labels={};self.fix=[];self.abs=[]
@@ -41,11 +42,11 @@ class Asm:
 def ui_tile(c,glyphs):
  return bytes(b for v in glyph_tile(c,glyphs)[::2] for b in (v,0))
 
-def dialogue_routine():
+def dialogue_routine(with_labels=False):
  """Bank 10. B=syllable code. Uploads top and final glyphs, writes both map cells, returns B=top tile."""
  a=Asm(DIALOGUE_CODE)
  a.emit('c5')                                   # keep caller BC
- a.emit('fa 71 c0 6f 26 00 29 29 29 29 29 29')  # HL = page*64
+ a.emit(f'fa 71 c0 e0 {LAST_PAGE:02x} 6f 26 00 29 29 29 29 29 29')  # remember page; HL = page*64
  a.emit(f'11 {PAGE_TABLE&255:02x} {PAGE_TABLE>>8:02x} 19')
  a.emit('78 85 6f 7c ce 00 67')                 # HL += code
  a.emit('7e e5');a.call('upload');a.emit('4f')  # top slot -> tile in C
@@ -64,7 +65,19 @@ def dialogue_routine():
  a.emit('2a 12 13 a1 12 13 05');a.jr('20','row')
  a.emit('c1 f1 c9')
  a.label('waitv');a.emit('f0 41 e6 02');a.jr('20','waitv');a.emit('c9')
- return a.finish()
+ # Re-upload the last printed page after the stage font reload: closing the status
+ # window restores English letters under a dialogue still on screen, and C071 is
+ # already FF once the dialogue timer ends, so the page is kept in HRAM.
+ a.label('reload')
+ a.emit(f'f0 {LAST_PAGE:02x} c6 40 67 2e 00 01 c0 7f')        # HL = page glyphs, BC = LETTERS
+ a.label('slot')
+ a.emit('0a c5 cb 37 5f e6 0f f6 80 57 7b e6 f0 5f 06 08')
+ a.label('reload_row');a.emit('f0 41 e6 02');a.jr('20','reload_row')
+ a.emit('2a 12 13 af 12 13 05');a.jr('20','reload_row')
+ a.emit('c1 0c 79 fe da');a.jr('20','slot')
+ a.emit('c9')
+ data=a.finish()
+ return (data,a.labels) if with_labels else data
 
 def main(base=None):
  original=SOURCE.read_bytes();assert hashlib.sha256(original).hexdigest()==EXPECTED_SHA256
@@ -75,6 +88,7 @@ def main(base=None):
  manifest={'dialogues':[],'labels':[]}
  bank=DIALOGUE_BANK*0x4000
  pos=0x17966
+ rom[bank:bank+len(DIALOGUES)*256]=bytes(len(DIALOGUES)*256)
  for i,lines in enumerate(DIALOGUES):
   assert all(len(s)<=18 for s in lines) and len(lines)<=3,(i,lines)
   syllables=list(dict.fromkeys(''.join(lines).replace(' ','')))
@@ -104,7 +118,7 @@ def main(base=None):
   pos+=len(encoded)
  rom[pos:0x17ff0]=bytes(0x17ff0-pos)
  rom[bank+0x3fc0:bank+0x3fc0+26]=bytes(LETTERS)
- routine=dialogue_routine()
+ routine,routine_labels=dialogue_routine(True)
  assert DIALOGUE_CODE+len(routine)<=0x7fc0
  rom[bank+DIALOGUE_CODE-0x4000:bank+DIALOGUE_CODE-0x4000+len(routine)]=routine
  # Dialogue lines advance two map rows (syllable row + final row), starting one row higher.
@@ -121,6 +135,8 @@ def main(base=None):
  stub.emit(f'c5 d5 3e {STAGE_FONT_BANK:02x} ea ff 3f 21 00 7e 11 40 89 01 80 00 cd 0d 18 3e 05 ea ff 3f d1 c1 21 fc 64 c3 96 04')
  stub.label('credit')   # the continue/game-over screen loads its own UI font bank
  stub.emit(f'3e {CREDIT_FONT_BANK:02x} c3 b6 15')
+ stub.label('reload')   # after the stage font load: restore the current dialogue page glyphs
+ stub.emit(f'cd b6 03 f0 {LAST_PAGE:02x} fe {len(DIALOGUES):02x} d0 3e {DIALOGUE_BANK:02x} ea ff 3f cd {routine_labels["reload"]&255:02x} {routine_labels["reload"]>>8:02x} 3e {STAGE_FONT_BANK:02x} ea ff 3f c9')
  stub.label('ending')
  stub.emit('3e 0b ea ff 3f 21 00 7d 11 50 8e 01 30 00 c3 0d 18')
  stubs=stub.finish();assert 0x63+len(stubs)<=0x100
@@ -132,6 +148,8 @@ def main(base=None):
  assert rom[0x388b:0x388e]==bytes.fromhex('cd b4 15')
  rom[0x388b:0x388e]=bytes([0xcd,stub.labels['credit']&255,stub.labels['credit']>>8])
  assert rom[0x15b4:0x15b6]==bytes.fromhex('3e 02');rom[0x15b5]=STAGE_FONT_BANK
+ assert rom[0x15cb:0x15ce]==bytes.fromhex('c3 b6 03')
+ rom[0x15cb:0x15ce]=bytes([0xc3,stub.labels['reload']&255,stub.labels['reload']>>8])
  # UI fonts. Stage font keeps every original tile except the unused katakana.
  status_chars=[];kata_chars=[];credit_chars=[]
  def bucket(offset):
