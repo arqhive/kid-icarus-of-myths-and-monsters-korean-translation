@@ -1,4 +1,4 @@
-"""Download the exact upstream Galmuri BDFs used for v0.1, with SHA-256 checks."""
+"""Download the exact upstream Galmuri BDFs used by the build, with SHA-256 checks."""
 from pathlib import Path
 import hashlib
 import urllib.request

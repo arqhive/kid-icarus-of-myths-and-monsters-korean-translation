@@ -1,4 +1,4 @@
-"""Package a verified local v0.1 release; never publish or contact a remote."""
+"""Package a verified local release; never publish or contact a remote."""
 import argparse
 import hashlib
 import json
@@ -11,7 +11,7 @@ from paths import ROOT, WORK, SOURCE, EXPECTED_SHA256
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('version', nargs='?', default='v0.1', choices=['v0.1'])
+    parser.add_argument('version', help='e.g. v1.0f; docs/releases/<version>.md must exist')
     args = parser.parse_args()
     release = ROOT/'release'
     release.mkdir(exist_ok=True)
@@ -33,7 +33,7 @@ def main():
     files = {release/patch_name:patch_name, release/'patch_manifest.json':'patch_manifest.json',
              ROOT/'tools/apply_patch.py':'apply_patch.py', release/'README_한국어.txt':'README_한국어.txt',
              ROOT/'tools/fonts/OFL.txt':'OFL.txt', ROOT/'LICENSE':'LICENSE',
-             ROOT/'docs/releases/v0.1.md':'RELEASE_NOTES.md'}
+             ROOT/f'docs/releases/{args.version}.md':'RELEASE_NOTES.md'}
     with zipfile.ZipFile(archive,'w',zipfile.ZIP_DEFLATED) as bundle:
         for path,name in files.items():
             info=zipfile.ZipInfo(name,date_time=(2026,9,29,0,0,0))

@@ -1,14 +1,14 @@
-키드 이카루스: 신화와 괴물 (GB) 한글 패치 v0.1
+키드 이카루스: 신화와 괴물 (GB) 한글 패치 v1.0f (최종판)
 제작: arqhive
 
 대상: Kid Icarus - Of Myths and Monsters (USA, Europe).gb
 원본 크기: 131,072바이트
 원본 SHA-256: 92c1fbf422abb8f09ca7fdbb563d1284108cc042e60e1222422986d9a59f9d97
-결과 SHA-256: 8b881b554cd49b907512bd82d21f6b74c4815ecb13be720490c863a20538719f
+결과 SHA-256: 2e80a37f0d7314ad33159da04a985826c92e60ca9c9b21f7bc6d733da31b2455
 
 [적용]
 1. ZIP을 폴더째 풉니다.
-2. IPS 패처로 KidIcarus_KO_v0.1.ips를 수정하지 않은 원본 영문 ROM에 적용합니다.
+2. IPS 패처로 KidIcarus_KO_v1.0f.ips를 수정하지 않은 원본 영문 ROM에 적용합니다.
    Python 3.11 이상이 있다면 다음 명령으로도 적용할 수 있습니다.
    python apply_patch.py "원본.gb"
 3. 원본과 같은 폴더에 Kid Icarus - Korean Full (Galmuri).gb가 생깁니다.
@@ -25,8 +25,7 @@
 Nintendo 상표와 저작권 표기는 유지했습니다.
 
 [검증]
-mGBA에서 오프닝·타이틀, 힌트 방 대사, 상태창, 남은 기회 화면을 확인했습니다.
-전 구간 직접 클리어 및 실기 검증은 하지 않은 v0.1 테스트판입니다.
+mGBA에서 처음부터 엔딩까지 플레이하며 확인했습니다.
 
 [라이선스]
 도구·번역문·문서는 MIT, Galmuri 글꼴은 SIL OFL 1.1입니다.

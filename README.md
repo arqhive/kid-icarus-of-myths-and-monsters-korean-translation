@@ -3,7 +3,7 @@
 *Kid Icarus: Of Myths and Monsters* (게임보이, 북미·유럽 공용판) 비공식 한국어 팬 패치입니다.
 영문판 원문을 기준으로 번역했습니다.
 
-**제작: arqhive** · **최신 버전: [v0.1](https://github.com/arqhive/kid-icarus-of-myths-and-monsters-korean-translation/releases/tag/v0.1)**
+**제작: arqhive** · **최신 버전: [v1.0f](https://github.com/arqhive/kid-icarus-of-myths-and-monsters-korean-translation/releases/tag/v1.0f)** (최종판)
 
 - 대사 테이블 39개를 모두 번역했습니다. 상점, 훈련, 무기, 저주 해제, 온천, 성장, 힌트, 최종 보스와 엔딩 대사가 들어 있습니다.
 - 타이틀 로고·부제·오프닝, 새 게임·이어하기, 상태창, 결과 화면, 저장 질문, 일시 정지, 게임 오버와 마지막 엔딩 문구를 한글로 바꿨습니다.
@@ -24,15 +24,15 @@
 | 항목 | 값 |
 |---|---|
 | 원본 SHA-256 | `92c1fbf422abb8f09ca7fdbb563d1284108cc042e60e1222422986d9a59f9d97` |
-| v0.1 결과 SHA-256 | `8b881b554cd49b907512bd82d21f6b74c4815ecb13be720490c863a20538719f` |
+| v1.0f 결과 SHA-256 | `2e80a37f0d7314ad33159da04a985826c92e60ca9c9b21f7bc6d733da31b2455` |
 | 결과 크기 | 262,144바이트 (256 KiB) |
 
 ### 적용 방법
 
-[릴리즈 페이지](https://github.com/arqhive/kid-icarus-of-myths-and-monsters-korean-translation/releases/tag/v0.1)에서 `KidIcarus_KO_v0.1.zip`을 받습니다. 아래 개발자용 빌드 절차로 직접 만들 수도 있습니다. 준비된 ZIP은 다음 두 방법 중 하나로 적용합니다.
+[릴리즈 페이지](https://github.com/arqhive/kid-icarus-of-myths-and-monsters-korean-translation/releases/tag/v1.0f)에서 `KidIcarus_KO_v1.0f.zip`을 받습니다. 아래 개발자용 빌드 절차로 직접 만들 수도 있습니다. 준비된 ZIP은 다음 두 방법 중 하나로 적용합니다.
 
 1. ZIP을 폴더째 풉니다.
-2. 일반 IPS 패처에서 `KidIcarus_KO_v0.1.ips`와 **원본 영문 ROM**을 선택하고 별도 결과 파일을 만듭니다. 또는 압축을 푼 폴더에서 아래 명령을 실행합니다.
+2. 일반 IPS 패처에서 `KidIcarus_KO_v1.0f.ips`와 **원본 영문 ROM**을 선택하고 별도 결과 파일을 만듭니다. 또는 압축을 푼 폴더에서 아래 명령을 실행합니다.
 3. 만들어진 `Kid Icarus - Korean Full (Galmuri).gb`를 실행합니다. 이전 한글판의 강제 저장 상태(세이브 스테이트)를 불러오지 말고 ROM을 새로 실행하세요.
 
 ```bash
@@ -45,13 +45,10 @@ python apply_patch.py "원본.gb"
 
 ### 실행 환경
 
-- **확인함**: mGBA에서 오프닝·타이틀, 힌트 방 대사, 상태창, 남은 기회 화면.
-- 처음부터 끝까지 직접 클리어하는 전 구간 플레이 검증과 실기 검증은 하지 않았습니다.
+- **확인함**: mGBA에서 처음부터 엔딩까지 플레이.
 
 ### 알려진 문제
 
-- 현재 검사 범위에서 추가 번역 누락은 발견되지 않았습니다. 드문 조건의 장면 전환은 플레이 검수가 더 필요합니다.
-- 대사 세 번째 줄의 받침은 대사 상자 바로 아래 줄에 표시됩니다. 장면에 따라 이 줄이 가려지거나 배경과 겹치는지 검수가 더 필요합니다.
 - 기존 버전의 세이브 스테이트는 변경된 대사 주소·글꼴과 맞지 않을 수 있습니다.
 - Nintendo 상표·저작권 표기와 내부 카트리지 제목은 유지했습니다. 사용하지 않는 원문 리소스도 ROM 안에 남아 있으나, 확인한 출력 경로는 한글 데이터를 사용합니다.
 
@@ -75,7 +72,7 @@ python -m pip install -r requirements.txt
 python tools/fetch_fonts.py
 python tools/build.py
 python tools/verify_build.py
-python tools/make_release.py v0.1
+python tools/make_release.py v1.0f
 ```
 
 이미 구성한 `.venv`는 재사용할 수 있습니다. PowerShell에서 활성화 스크립트를 실행할 수 없다면 `python` 대신 `.\.venv\Scripts\python.exe`를 사용하세요. 다른 운영체제에서는 해당 환경의 가상 환경 활성화 명령을 사용합니다.
@@ -84,7 +81,7 @@ python tools/make_release.py v0.1
 
 - `build.py`: 오프닝 → 타이틀 → 전체 텍스트를 메모리에서 차례로 빌드해 `work/Kid Icarus - Korean Full (Galmuri).gb` 하나와 `work/full/Kid_Icarus_Korean_Full.ips`를 만듭니다. Windows에서는 실제 바탕화면 위치를 찾아 완성본 한 개를 복사하고 해시 일치를 확인합니다.
 - `verify_build.py`: 에뮬레이터 없이 ROM 데이터만 검사합니다. 체크섬·IPS 적용 결과, 원본 뱅크의 변경 위치, 코드 패치, 대사 39개의 글자·받침 그림과 줄 배치, UI 글자와 원본 그림 보존, 타이틀 ™·일시 정지·엔딩 글자를 확인합니다. 결과는 `work/full/verification.json`, 대사 재현 이미지는 `work/full/dialogue_pages.png`입니다. 화면 확인은 에뮬레이터에서 직접 합니다.
-- `make_release.py v0.1`: 검증을 통과한 ROM인지, IPS 적용 결과가 같은지 확인한 뒤 IPS와 해시 확인 패처, 설명서·라이선스를 `release/KidIcarus_KO_v0.1.zip`으로 묶습니다. 원본 및 완성 ROM은 ZIP에 넣지 않습니다.
+- `make_release.py v1.0f`: 검증을 통과한 ROM인지, IPS 적용 결과가 같은지 확인한 뒤 IPS와 해시 확인 패처, 설명서·라이선스를 `release/KidIcarus_KO_<버전>.zip`으로 묶습니다. 원본 및 완성 ROM은 ZIP에 넣지 않습니다.
 
 ### 번역 수정
 
