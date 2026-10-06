@@ -29,10 +29,10 @@
 
 ### 적용 방법
 
-[릴리즈 페이지](https://github.com/arqhive/kid-icarus-of-myths-and-monsters-korean-translation/releases/tag/v1.0f)에서 `KidIcarus_KO_v1.0f.zip`을 받습니다. 아래 개발자용 빌드 절차로 직접 만들 수도 있습니다. 준비된 ZIP은 다음 두 방법 중 하나로 적용합니다.
+[릴리즈 페이지](https://github.com/arqhive/kid-icarus-of-myths-and-monsters-korean-translation/releases/tag/v1.0f)에서 `KIDICARUS_KPatch_v1.0f.zip`을 받습니다. 아래 개발자용 빌드 절차로 직접 만들 수도 있습니다. 준비된 ZIP은 다음 두 방법 중 하나로 적용합니다.
 
 1. ZIP을 폴더째 풉니다.
-2. 일반 IPS 패처에서 `KidIcarus_KO_v1.0f.ips`와 **원본 영문 ROM**을 선택하고 별도 결과 파일을 만듭니다. 또는 압축을 푼 폴더에서 아래 명령을 실행합니다.
+2. 일반 IPS 패처에서 `KIDICARUS_KPatch_v1.0f.ips`와 **원본 영문 ROM**을 선택하고 별도 결과 파일을 만듭니다. 또는 압축을 푼 폴더에서 아래 명령을 실행합니다.
 3. 만들어진 `Kid Icarus - Korean Full (Galmuri).gb`를 실행합니다. 이전 한글판의 강제 저장 상태(세이브 스테이트)를 불러오지 말고 ROM을 새로 실행하세요.
 
 ```bash
