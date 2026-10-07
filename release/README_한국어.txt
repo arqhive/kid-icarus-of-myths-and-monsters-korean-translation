@@ -1,4 +1,4 @@
-키드 이카루스: 신화와 괴물 (GB) 한글 패치 v1.0f (최종판)
+키드 이카루스: 신화와 괴물 (GB) 한글 패치 v1.0f (완성판)
 제작: arqhive
 
 대상: Kid Icarus - Of Myths and Monsters (USA, Europe).gb

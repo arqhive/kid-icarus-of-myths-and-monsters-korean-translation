@@ -3,7 +3,7 @@
 *Kid Icarus: Of Myths and Monsters* (게임보이, 북미·유럽 공용판) 비공식 한국어 팬 패치입니다.
 영문판 원문을 기준으로 번역했습니다.
 
-**제작: arqhive** · **최신 버전: [v1.0f](https://github.com/arqhive/kid-icarus-of-myths-and-monsters-korean-translation/releases/tag/v1.0f)** (최종판)
+**제작: arqhive** · **최신 버전: [v1.0f](https://github.com/arqhive/kid-icarus-of-myths-and-monsters-korean-translation/releases/tag/v1.0f)** (완성판)
 
 - 대사 테이블 39개를 모두 번역했습니다. 상점, 훈련, 무기, 저주 해제, 온천, 성장, 힌트, 최종 보스와 엔딩 대사가 들어 있습니다.
 - 타이틀 로고·부제·오프닝, 새 게임·이어하기, 상태창, 결과 화면, 저장 질문, 일시 정지, 게임 오버와 마지막 엔딩 문구를 한글로 바꿨습니다.
